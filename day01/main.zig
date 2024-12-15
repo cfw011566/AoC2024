@@ -26,7 +26,7 @@ test "puzzle 2" {
 }
 
 fn puzzle1(allocator: std.mem.Allocator, puzzle: []const u8) !usize {
-    var lines = std.mem.splitScalar(u8, puzzle, '\n');
+    var lines = std.mem.tokenizeScalar(u8, puzzle, '\n');
 
     var first_list = std.ArrayList(usize).init(allocator);
     var second_list = std.ArrayList(usize).init(allocator);
@@ -36,7 +36,6 @@ fn puzzle1(allocator: std.mem.Allocator, puzzle: []const u8) !usize {
     }
 
     while (lines.next()) |line| {
-        if (line.len == 0) break;
         var it = std.mem.tokenizeAny(u8, line, " ");
         const first_number = try std.fmt.parseInt(usize, it.next().?, 10);
         const second_number = try std.fmt.parseInt(usize, it.next().?, 10);
@@ -58,8 +57,6 @@ fn puzzle1(allocator: std.mem.Allocator, puzzle: []const u8) !usize {
 }
 
 fn puzzle2(puzzle: []const u8) !usize {
-    var lines = std.mem.splitScalar(u8, puzzle, '\n');
-
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
@@ -70,8 +67,8 @@ fn puzzle2(puzzle: []const u8) !usize {
         second_list.deinit();
     }
 
+    var lines = std.mem.tokenizeScalar(u8, puzzle, '\n');
     while (lines.next()) |line| {
-        if (line.len == 0) break;
         var it = std.mem.tokenizeAny(u8, line, " ");
         const first_number = try std.fmt.parseInt(usize, it.next().?, 10);
         const second_number = try std.fmt.parseInt(usize, it.next().?, 10);

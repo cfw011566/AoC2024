@@ -11,17 +11,17 @@ pub fn main() !void {
     const part1 = try puzzle1(input);
     std.debug.print("part1 = {d}\n", .{part1});
     try std.testing.expectEqual(4, puzzle2(allocator, example));
-    const part2 = try puzzle2(input);
+    const part2 = try puzzle2(allocator, input);
     std.debug.print("part2 = {d}\n", .{part2});
 }
 
 fn puzzle1(puzzle: []const u8) !usize {
-    var lines = std.mem.splitScalar(u8, puzzle, '\n');
+    var lines = std.mem.tokenizeScalar(u8, puzzle, '\n');
 
     var count: usize = 0;
     while (lines.next()) |line| {
         if (line.len == 0) break;
-        var it = std.mem.tokenizeAny(u8, line, " ");
+        var it = std.mem.tokenizeScalar(u8, line, ' ');
         var level = try std.fmt.parseInt(isize, it.next().?, 10);
         var level1 = level;
         level = try std.fmt.parseInt(isize, it.next().?, 10);
@@ -68,7 +68,7 @@ fn is_safe(levels: []isize) bool {
 }
 
 fn puzzle2(allocator: std.mem.Allocator, puzzle: []const u8) !usize {
-    var lines = std.mem.splitScalar(u8, puzzle, '\n');
+    var lines = std.mem.tokenizeScalar(u8, puzzle, '\n');
 
     var levels = std.ArrayList(isize).init(allocator);
     defer levels.deinit();
@@ -77,7 +77,7 @@ fn puzzle2(allocator: std.mem.Allocator, puzzle: []const u8) !usize {
     while (lines.next()) |line| {
         if (line.len == 0) break;
 
-        var it = std.mem.tokenizeAny(u8, line, " ");
+        var it = std.mem.tokenizeScalar(u8, line, ' ');
         while (it.next()) |level_text| {
             const level = try std.fmt.parseInt(isize, level_text, 10);
             try levels.append(level);
