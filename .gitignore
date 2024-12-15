@@ -9,9 +9,6 @@
 # Cheers!
 # -andrewrk
 
-[core]
-     excludesfile = ~/.gitignore
-
 .zig-cache/
 zig-out/
 /release/
