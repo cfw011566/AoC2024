@@ -64,9 +64,10 @@ fn check_three_ops(value_check: usize, numbers: []const usize) bool {
             } else if ((op & mask) == mask1) {
                 res *= numbers[i];
             } else if ((op & mask) == mask2) {
-                const digits = (numbers[i] / 10) + 1;
-                for (0..digits) |_| {
+                var num = numbers[i];
+                while (num > 0) {
                     res *= 10;
+                    num /= 10;
                 }
                 res += numbers[i];
             } else {
