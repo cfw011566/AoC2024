@@ -7,17 +7,33 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
+    var time_0 = std.time.microTimestamp();
     const part1 = try puzzle1(allocator, input);
+    var time_1 = std.time.microTimestamp();
     std.debug.print("part1 = {d}\n", .{part1});
+    std.debug.print("time = {d} micro seconds\n", .{time_1 - time_0});
 
+    time_0 = std.time.milliTimestamp();
     const part2 = try puzzle2(allocator, input);
+    time_1 = std.time.milliTimestamp();
     std.debug.print("part2 = {d}\n", .{part2});
+    std.debug.print("time = {d} milli seconds\n", .{time_1 - time_0});
 }
 
 test "puzzle1" {
     const allocator = std.testing.allocator;
+    const time_0 = std.time.nanoTimestamp();
     const result = try puzzle1(allocator, example);
+    const time_1 = std.time.nanoTimestamp();
     try std.testing.expectEqual(3749, result);
+
+    const time_diff = time_1 - time_0;
+    std.debug.print("time = {d}\n", .{time_diff});
+
+    const time_diff_str = try std.fmt.allocPrint(allocator, "time diff in nano seconds = {}", .{time_diff});
+    defer allocator.free(time_diff_str);
+
+    std.debug.print("{s}\n", .{time_diff_str});
 }
 
 test "puzzle2" {
