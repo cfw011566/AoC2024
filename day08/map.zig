@@ -15,12 +15,16 @@ allocator: Allocator,
 rows: usize,
 columns: usize,
 cells: [][]usize,
+antenna: [128]?std.ArrayList(Position),
 
 const Self = @This();
 
 pub fn init(allocator: Allocator, content: []const u8) !Self {
     var map = std.ArrayList([]usize).init(allocator);
     defer map.deinit();
+
+    var antenna = [_]?std.ArrayList(Position){null} ** 128;
+
     var lines = std.mem.tokenizeScalar(u8, content, '\n');
     var rows: usize = 0;
     while (lines.next()) |line| {
@@ -28,7 +32,18 @@ pub fn init(allocator: Allocator, content: []const u8) !Self {
         @memset(row_line, 0);
         for (0..row_line.len) |col| {
             if (std.ascii.isAlphanumeric(line[col])) {
+                // std.debug.print("{c} ({d},{d})\n", .{ line[col], rows, col });
                 row_line[col] = 1 << @intFromEnum(EntityMask.Antenna);
+                const char = line[col];
+                if (antenna[char]) |*list| {
+                    const position = Position{ .row = @intCast(rows), .column = @intCast(col) };
+                    try list.*.append(position);
+                } else {
+                    var list = std.ArrayList(Position).init(allocator);
+                    const position = Position{ .row = @intCast(rows), .column = @intCast(col) };
+                    try list.append(position);
+                    antenna[char] = list;
+                }
             }
         }
         try map.append(row_line);
@@ -40,6 +55,7 @@ pub fn init(allocator: Allocator, content: []const u8) !Self {
         .rows = rows,
         .columns = columns,
         .cells = try map.toOwnedSlice(),
+        .antenna = antenna,
     };
 }
 
@@ -48,6 +64,11 @@ pub fn deinit(self: Self) void {
         self.allocator.free(self.cells[row]);
     }
     self.allocator.free(self.cells);
+    for (0..128) |i| {
+        if (self.antenna[i]) |*list| {
+            list.*.deinit();
+        }
+    }
     return;
 }
 
@@ -65,5 +86,14 @@ pub fn print(self: Self) void {
             std.debug.print("{c}", .{char});
         }
         std.debug.print("\n", .{});
+    }
+    for (0..128) |i| {
+        if (self.antenna[i]) |list| {
+            std.debug.print("{c}: {d}\n", .{ @as(u8, @intCast(i)), list.items.len });
+            for (list.items) |pos| {
+                std.debug.print("({d},{d}) ", .{ pos.row, pos.column });
+            }
+            std.debug.print("\n", .{});
+        }
     }
 }
