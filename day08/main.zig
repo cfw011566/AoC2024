@@ -25,7 +25,9 @@ fn puzzle1(allocator: std.mem.Allocator, content: []const u8) !usize {
     var map = try Map.init(allocator, content);
     defer map.deinit();
 
+    const count = map.solve();
+
     map.print();
 
-    return 14;
+    return count;
 }

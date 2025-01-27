@@ -4,6 +4,14 @@ const Allocator = std.mem.Allocator;
 const Position = struct {
     row: isize,
     column: isize,
+
+    fn add(self: Position, other: Position) Position {
+        return Position{ .row = self.row + other.row, .column = self.column + other.column };
+    }
+
+    fn minus(self: Position) Position {
+        return Position{ .row = -self.row, .column = -self.column };
+    }
 };
 
 pub const EntityMask = enum(u8) {
@@ -96,4 +104,43 @@ pub fn print(self: Self) void {
             std.debug.print("\n", .{});
         }
     }
+}
+
+pub fn solve(self: Self) usize {
+    const mask = 1 << @intFromEnum(EntityMask.Antinode);
+    var count: usize = 0;
+    for (0..128) |char| {
+        if (self.antenna[char]) |list| {
+            for (0..list.items.len - 1) |i| {
+                for (i + 1..list.items.len) |j| {
+                    const a = list.items[i];
+                    const b = list.items[j];
+                    const diff = a.add(b.minus());
+                    const a_b = a.add(diff);
+                    const b_a = b.add(diff.minus());
+                    if (a_b.row >= 0 and a_b.row < self.rows and
+                        a_b.column >= 0 and a_b.column < self.columns)
+                    {
+                        const row: usize = @intCast(a_b.row);
+                        const col: usize = @intCast(a_b.column);
+                        if ((self.cells[row][col] & mask) == 0) {
+                            self.cells[row][col] |= mask;
+                            count += 1;
+                        }
+                    }
+                    if (b_a.row >= 0 and b_a.row < self.rows and
+                        b_a.column >= 0 and b_a.column < self.columns)
+                    {
+                        const row: usize = @intCast(b_a.row);
+                        const col: usize = @intCast(b_a.column);
+                        if ((self.cells[row][col] & mask) == 0) {
+                            self.cells[row][col] |= mask;
+                            count += 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return count;
 }
