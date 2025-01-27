@@ -11,14 +11,20 @@ pub fn main() !void {
     const part1 = try puzzle1(allocator, input);
     std.debug.print("part1 = {d}\n", .{part1});
 
-    // const part2 = try puzzle2(allocator, input);
-    // std.debug.print("part2 = {d}\n", .{part2});
+    const part2 = try puzzle2(allocator, input);
+    std.debug.print("part2 = {d}\n", .{part2});
 }
 
 test "puzzle1" {
     const allocator = std.testing.allocator;
     const result = try puzzle1(allocator, example);
-    try std.testing.expectEqual(14, result);
+    try std.testing.expectEqual(result, 14);
+}
+
+test "puzzle2" {
+    const allocator = std.testing.allocator;
+    const result = try puzzle2(allocator, example);
+    try std.testing.expectEqual(result, 34);
 }
 
 fn puzzle1(allocator: std.mem.Allocator, content: []const u8) !usize {
@@ -26,6 +32,17 @@ fn puzzle1(allocator: std.mem.Allocator, content: []const u8) !usize {
     defer map.deinit();
 
     const count = map.solve();
+
+    map.print();
+
+    return count;
+}
+
+fn puzzle2(allocator: std.mem.Allocator, content: []const u8) !usize {
+    var map = try Map.init(allocator, content);
+    defer map.deinit();
+
+    const count = map.solve2();
 
     map.print();
 

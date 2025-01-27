@@ -144,3 +144,67 @@ pub fn solve(self: Self) usize {
     }
     return count;
 }
+
+pub fn solve2(self: Self) usize {
+    const mask = 1 << @intFromEnum(EntityMask.Antinode);
+    var count: usize = 0;
+    for (0..128) |char| {
+        if (self.antenna[char]) |list| {
+            for (0..list.items.len - 1) |i| {
+                for (i + 1..list.items.len) |j| {
+                    const a = list.items[i];
+                    const b = list.items[j];
+
+                    var row: usize = @intCast(a.row);
+                    var col: usize = @intCast(a.column);
+                    if ((self.cells[row][col] & mask) == 0) {
+                        self.cells[row][col] |= mask;
+                        count += 1;
+                    }
+                    row = @intCast(b.row);
+                    col = @intCast(b.column);
+                    if ((self.cells[row][col] & mask) == 0) {
+                        self.cells[row][col] |= mask;
+                        count += 1;
+                    }
+
+                    const diff = a.add(b.minus());
+                    var a_b = a;
+                    while (true) {
+                        a_b = a_b.add(diff);
+                        if (a_b.row >= 0 and a_b.row < self.rows and
+                            a_b.column >= 0 and a_b.column < self.columns)
+                        {
+                            row = @intCast(a_b.row);
+                            col = @intCast(a_b.column);
+                            if ((self.cells[row][col] & mask) == 0) {
+                                self.cells[row][col] |= mask;
+                                count += 1;
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+
+                    var b_a = b;
+                    while (true) {
+                        b_a = b_a.add(diff.minus());
+                        if (b_a.row >= 0 and b_a.row < self.rows and
+                            b_a.column >= 0 and b_a.column < self.columns)
+                        {
+                            row = @intCast(b_a.row);
+                            col = @intCast(b_a.column);
+                            if ((self.cells[row][col] & mask) == 0) {
+                                self.cells[row][col] |= mask;
+                                count += 1;
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return count;
+}
