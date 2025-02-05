@@ -1,31 +1,33 @@
 const std = @import("std");
 
 const example = @embedFile("example.txt");
-//const example2 = @embedFile("example2.txt");
 const input = @embedFile("input.txt");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    try std.testing.expectEqual(puzzle1(allocator, example), 11);
-    const part1 = try puzzle1(allocator, input);
+    var timer = try std.time.Timer.start();
+    const part1 = try puzzle1(allocator, input, false);
+    std.debug.print("{}\n", .{timer.lap()});
     std.debug.print("part1 = {d}\n", .{part1});
-    try std.testing.expectEqual(puzzle2(example), 31);
-    const part2 = try puzzle2(input);
+    timer.reset();
+    const part2 = try puzzle2(allocator, input, false);
+    std.debug.print("{}\n", .{timer.lap()});
     std.debug.print("part2 = {d}\n", .{part2});
 }
 
 test "puzzle 1" {
     const allocator = std.testing.allocator;
-    try std.testing.expectEqual(puzzle1(allocator, example), 11);
+    try std.testing.expectEqual(puzzle1(allocator, example, true), 11);
 }
 
 test "puzzle 2" {
-    try std.testing.expectEqual(puzzle2(example), 31);
+    const allocator = std.testing.allocator;
+    try std.testing.expectEqual(puzzle2(allocator, example, true), 31);
 }
 
-fn puzzle1(allocator: std.mem.Allocator, puzzle: []const u8) !usize {
+fn puzzle1(allocator: std.mem.Allocator, puzzle: []const u8, debug: bool) !usize {
     var lines = std.mem.tokenizeScalar(u8, puzzle, '\n');
 
     var first_list = std.ArrayList(usize).init(allocator);
@@ -39,14 +41,18 @@ fn puzzle1(allocator: std.mem.Allocator, puzzle: []const u8) !usize {
         var it = std.mem.tokenizeAny(u8, line, " ");
         const first_number = try std.fmt.parseInt(usize, it.next().?, 10);
         const second_number = try std.fmt.parseInt(usize, it.next().?, 10);
-        // std.debug.print("{d} {d}\n", .{ first_number, second_number });
+        if (debug) {
+            std.debug.print("{d} {d}\n", .{ first_number, second_number });
+        }
         try first_list.append(first_number);
         try second_list.append(second_number);
     }
     std.mem.sort(usize, first_list.items, {}, std.sort.asc(usize));
     std.mem.sort(usize, second_list.items, {}, std.sort.asc(usize));
-    // std.debug.print("first list = {any}\n", .{first_list});
-    // std.debug.print("second list = {any}\n", .{second_list});
+    if (debug) {
+        std.debug.print("first list = {any}\n", .{first_list});
+        std.debug.print("second list = {any}\n", .{second_list});
+    }
     var sum: usize = 0;
     for (0..first_list.items.len) |i| {
         const first: isize = @intCast(first_list.items[i]);
@@ -56,10 +62,7 @@ fn puzzle1(allocator: std.mem.Allocator, puzzle: []const u8) !usize {
     return sum;
 }
 
-fn puzzle2(puzzle: []const u8) !usize {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-
+fn puzzle2(allocator: std.mem.Allocator, puzzle: []const u8, debug: bool) !usize {
     var first_list = std.ArrayList(usize).init(allocator);
     var second_list = std.ArrayList(usize).init(allocator);
     defer {
@@ -72,14 +75,18 @@ fn puzzle2(puzzle: []const u8) !usize {
         var it = std.mem.tokenizeAny(u8, line, " ");
         const first_number = try std.fmt.parseInt(usize, it.next().?, 10);
         const second_number = try std.fmt.parseInt(usize, it.next().?, 10);
-        // std.debug.print("{d} {d}\n", .{ first_number, second_number });
+        if (debug) {
+            std.debug.print("{d} {d}\n", .{ first_number, second_number });
+        }
         try first_list.append(first_number);
         try second_list.append(second_number);
     }
     std.mem.sort(usize, first_list.items, {}, std.sort.asc(usize));
     std.mem.sort(usize, second_list.items, {}, std.sort.asc(usize));
-    // std.debug.print("first list = {any}\n", .{first_list});
-    // std.debug.print("second list = {any}\n", .{second_list});
+    if (debug) {
+        std.debug.print("first list = {any}\n", .{first_list});
+        std.debug.print("second list = {any}\n", .{second_list});
+    }
     const first_items = first_list.items;
     const second_items = second_list.items;
     const list_len = first_items.len;
@@ -101,9 +108,11 @@ fn puzzle2(puzzle: []const u8) !usize {
             while ((j_next < list_len) and (second_items[j_next] == number)) {
                 j_next += 1;
             }
-            // std.debug.print("number = {d}\n", .{number});
-            // std.debug.print("i = {d} j = {d}\n", .{ i, j });
-            // std.debug.print("i_next {d} j_next = {d}\n", .{ i_next, j_next });
+            if (debug) {
+                std.debug.print("number = {d}\n", .{number});
+                std.debug.print("i = {d} j = {d}\n", .{ i, j });
+                std.debug.print("i_next {d} j_next = {d}\n", .{ i_next, j_next });
+            }
             sum += number * (i_next - i) * (j_next - j);
             i = i_next;
             j = j_next;
