@@ -10,8 +10,17 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
-    const scores = try puzzle1(allocator, input);
-    std.debug.print("puzzle 1 = {d}\n", .{scores});
+    var timer = try std.time.Timer.start();
+    const part1 = try puzzle1(allocator, input);
+    var seconds: f64 = @floatFromInt(timer.lap());
+    seconds /= 1e9;
+    std.debug.print("puzzle 1 = {d} in {d:.6} seconds\n", .{ part1, seconds });
+
+    timer.reset();
+    const part2 = try puzzle2(allocator, input);
+    seconds = @floatFromInt(timer.lap());
+    seconds /= 1e9;
+    std.debug.print("puzzle 2 = {d} in {d:.6} seconds\n", .{ part2, seconds });
 
     return;
 }
@@ -20,6 +29,13 @@ test "puzzle 1" {
     const allocator = std.testing.allocator;
 
     try std.testing.expectEqual(36, try puzzle1(allocator, example));
+}
+
+test "puzzle 2" {
+    const allocator = std.testing.allocator;
+
+    const part2 = try puzzle2(allocator, example);
+    try std.testing.expectEqual(81, part2);
 }
 
 const Offset = struct {
@@ -34,7 +50,7 @@ const offsets = [_]Offset{
     Offset{ .row = 0, .column = -1 },
 };
 
-fn trailheads(map: Map, row: usize, col: usize) !usize {
+fn trailheads(map: Map, row: usize, col: usize, distinct: bool) !usize {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer std.debug.assert(gpa.deinit() == .ok);
     const allocator = gpa.allocator();
@@ -70,16 +86,20 @@ fn trailheads(map: Map, row: usize, col: usize) !usize {
         const r1: usize = @intCast(path.items[i].row);
         const c1: usize = @intCast(path.items[i].column);
         if (map.cells[r1][c1] == 9) {
-            var found = false;
-            var j = len - 1;
-            while (j > i) : (j -= 1) {
-                if (path.items[i].row == path.items[j].row and path.items[i].column == path.items[j].column) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
+            if (distinct) {
                 count += 1;
+            } else {
+                var found = false;
+                var j = len - 1;
+                while (j > i) : (j -= 1) {
+                    if (path.items[i].row == path.items[j].row and path.items[i].column == path.items[j].column) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    count += 1;
+                }
             }
         } else {
             break;
@@ -99,13 +119,34 @@ fn puzzle1(allocator: std.mem.Allocator, content: []const u8) !usize {
     for (0..map.rows) |row| {
         for (0..map.columns) |col| {
             if (map.cells[row][col] == 0) {
-                const scores = try trailheads(map, row, col);
-                std.debug.print("{d} ", .{scores});
+                const scores = try trailheads(map, row, col, false);
+                // std.debug.print("{d} ", .{scores});
                 sum += scores;
             }
         }
     }
-    std.debug.print("\n", .{});
+    // std.debug.print("\n", .{});
+
+    return sum;
+}
+
+fn puzzle2(allocator: std.mem.Allocator, content: []const u8) !usize {
+    const map = try Map.init(allocator, content);
+    defer map.deinit();
+
+    // map.print();
+
+    var sum: usize = 0;
+    for (0..map.rows) |row| {
+        for (0..map.columns) |col| {
+            if (map.cells[row][col] == 0) {
+                const scores = try trailheads(map, row, col, true);
+                // std.debug.print("{d} ", .{scores});
+                sum += scores;
+            }
+        }
+    }
+    // std.debug.print("\n", .{});
 
     return sum;
 }
