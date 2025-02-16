@@ -35,42 +35,54 @@ fn puzzle1(allocator: std.mem.Allocator, content: []const u8) !usize {
     const map = try Map.init(allocator, content);
     defer map.deinit();
 
+    // define type of LinkedList
     const L = std.DoublyLinkedList(Position);
+    // double linked list unvisited garden in this region
     var region_cells = L{};
+    // id of region
     var total_regions: usize = 0;
-    var sum: usize = 0;
+    var price: usize = 0;
     for (0..map.rows) |row| {
         for (0..map.columns) |col| {
+            // new region if region_id of garden is null
             if (map.cells[row][col].region_id == null) {
-                var area: usize = 0;
-                var perimiter: usize = 0;
-                map.cells[row][col].region_id = total_regions;
                 defer total_regions += 1;
 
+                var area: usize = 0;
+                var perimeters: usize = 0;
+
+                // add this garden into unvisited linked list of regions
                 var p1 = try allocator.create(L.Node);
                 p1.data = Position{ .row = @intCast(row), .column = @intCast(col) };
                 region_cells.append(p1);
+
+                // looping until no unvisited garden in linked list
                 while (region_cells.popFirst()) |p| {
-                    defer allocator.destroy(p);
                     // std.debug.print("len = {d} {}\n", .{ region_cells.len, p.data });
+                    defer allocator.destroy(p);
+
                     const pos = p.data;
                     const pos_row = pos.row;
                     const pos_col = pos.column;
                     const p_cell = &(map.cells[@intCast(pos_row)][@intCast(pos_col)]);
+                    p_cell.region_id = total_regions;
 
+                    // looking for neighbors
                     for (offsets) |offset| {
                         const r = pos_row + offset.row;
                         const c = pos_col + offset.column;
                         if (r < 0 or r >= map.rows or c < 0 or c >= map.columns) {
+                            // it is perimeter if out of bound
                             p_cell.perimeters += 1;
                         } else {
                             const p_neighbor = &(map.cells[@intCast(r)][@intCast(c)]);
                             if (p_cell.plant != p_neighbor.plant) {
+                                // it is perimeter if has different plant
                                 p_cell.perimeters += 1;
                             } else {
                                 if (p_neighbor.region_id == null) {
+                                    // add into unvisted linked list if has same plant but not visited yet
                                     p_neighbor.region_id = p_cell.region_id;
-                                    // std.debug.print("add {d},{d}\n", .{ r, c });
                                     var p2 = try allocator.create(L.Node);
                                     p2.data = Position{ .row = r, .column = c };
                                     region_cells.append(p2);
@@ -78,15 +90,19 @@ fn puzzle1(allocator: std.mem.Allocator, content: []const u8) !usize {
                             }
                         }
                     }
+
+                    // update area and perimeters of region
                     area += 1;
-                    perimiter += p_cell.perimeters;
+                    perimeters += p_cell.perimeters;
                 }
-                sum += area * perimiter;
+
+                // std.debug.print("region {d} area {d} perimeter {d}\n", .{ total_regions, area, perimeters });
+                price += area * perimeters;
             }
         }
     }
 
     // std.debug.print("{}\n", .{map});
 
-    return sum;
+    return price;
 }
