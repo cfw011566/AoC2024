@@ -23,10 +23,10 @@ fn puzzle1(content: []const u8) usize {
     var is_file: bool = true;
     var position: usize = 0;
 
-    std.debug.print("{d} {d}\n", .{ begin, end });
+    // std.debug.print("{d} {d}\n", .{ begin, end });
     var file_id: usize = 0;
     var last_file_id: usize = content.len / 2;
-    std.debug.print("{d} {d}\n", .{ file_id, last_file_id });
+    // std.debug.print("{d} {d}\n", .{ file_id, last_file_id });
 
     var checksum: usize = 0;
     var end_left: isize = 0;
@@ -34,7 +34,7 @@ fn puzzle1(content: []const u8) usize {
         if (is_file) {
             const begin_count = content[begin] - '0';
             for (0..begin_count) |_| {
-                std.debug.print("{d}", .{file_id});
+                // std.debug.print("{d}", .{file_id});
                 checksum += file_id * position;
                 position += 1;
                 if (begin == end and begin_count > end_left) {
@@ -46,7 +46,7 @@ fn puzzle1(content: []const u8) usize {
             var begin_count: isize = content[begin] - '0';
             var end_count: isize = if (end_left == 0) content[end] - '0' else end_left;
             while (begin_count > 0) {
-                std.debug.print("{d}", .{last_file_id});
+                // std.debug.print("{d}", .{last_file_id});
                 checksum += last_file_id * position;
                 position += 1;
                 begin_count -= 1;
@@ -65,7 +65,7 @@ fn puzzle1(content: []const u8) usize {
         begin += 1;
         is_file = !is_file;
     }
-    std.debug.print("\n{d}\n", .{checksum});
+    // std.debug.print("\n{d}\n", .{checksum});
     return checksum;
 }
 
@@ -130,6 +130,7 @@ fn puzzle2(allocator: std.mem.Allocator, content: []const u8) !usize {
     for (file_counts, 0..) |count, ii| {
         for (0..free_counts.len) |c| {
             const free_count = free_counts[c];
+            if (free_indexes[c] > file_indexes[ii]) break;
             if (count <= free_count) {
                 const free_index = free_indexes[c];
                 const file_index = file_indexes[ii];
@@ -142,7 +143,7 @@ fn puzzle2(allocator: std.mem.Allocator, content: []const u8) !usize {
                 break;
             }
         }
-        //print_file_system(file_system[0..position]);
+        // print_file_system(file_system[0..position]);
     }
     var checksum: usize = 0;
     for (0..position) |i| {
@@ -150,7 +151,7 @@ fn puzzle2(allocator: std.mem.Allocator, content: []const u8) !usize {
             checksum += i * id;
         }
     }
-    std.debug.print("checksum = {d}\n", .{checksum});
+    // std.debug.print("checksum = {d}\n", .{checksum});
 
     return checksum;
 }
