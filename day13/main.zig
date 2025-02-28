@@ -5,10 +5,17 @@ const input = @embedFile("input.txt");
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();
-    const part1 = try puzzle1(input);
+    const part1 = try puzzle1(input, 0);
     var seconds: f64 = @floatFromInt(timer.lap());
     seconds /= 1e9;
     std.debug.print("puzzle 1 = {d} in {d:.6} seconds\n", .{ part1, seconds });
+
+    timer.reset();
+    const part2 = try puzzle1(input, 10000000000000);
+    seconds = @floatFromInt(timer.lap());
+    seconds /= 1e9;
+    std.debug.print("puzzle 2 = {d} in {d:.6} seconds\n", .{ part2, seconds });
+
     return;
 }
 
@@ -40,10 +47,10 @@ const Machine = struct {
 };
 
 test "puzzle1" {
-    try std.testing.expectEqual(480, puzzle1(example));
+    try std.testing.expectEqual(480, puzzle1(example, 0));
 }
 
-fn puzzle1(content: []const u8) !usize {
+fn puzzle1(content: []const u8, bias: usize) !usize {
     var lines = std.mem.splitScalar(u8, content, '\n');
     var parts: usize = 0;
     var machine: Machine = undefined;
@@ -100,9 +107,11 @@ fn puzzle1(content: []const u8) !usize {
             _ = it.next();
             if (it.next()) |x_text| {
                 machine.prize.x = try std.fmt.parseInt(usize, x_text, 10);
+                machine.prize.x += bias;
             }
             if (it.next()) |y_text| {
                 machine.prize.y = try std.fmt.parseInt(usize, y_text, 10);
+                machine.prize.y += bias;
             }
             parts = 0;
         } else {
