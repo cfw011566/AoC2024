@@ -8,8 +8,8 @@ const input = @embedFile("input.txt");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer std.debug.assert(gpa.deinit() == .ok);
     const allocator = gpa.allocator();
+    defer _ = gpa.detectLeaks();
 
     var timer = try std.time.Timer.start();
     const part1 = try puzzle1(allocator, input);
