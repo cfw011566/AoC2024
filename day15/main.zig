@@ -1,7 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const Map = @import("map.zig").Map;
-const Direction = @import("map.zig").Direction;
+const Map = @import("Map.zig").Map;
+const Direction = @import("Map.zig").Direction;
 
 const small_example = @embedFile("small.txt");
 const large_example = @embedFile("large.txt");
