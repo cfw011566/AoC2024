@@ -1,15 +1,26 @@
 const std = @import("std");
-const Map = @import("Map.zig").Map;
-const Direction = @import("Map.zig").Direction;
+const builtin = @import("builtin");
+const Map = @import("map.zig").Map;
+const Direction = @import("map.zig").Direction;
 
 const small_example = @embedFile("small.txt");
 const large_example = @embedFile("large.txt");
 const input = @embedFile("input.txt");
 
+var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
+
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer std.debug.assert(gpa.deinit() == .ok);
-    const allocator = gpa.allocator();
+    const allocator, const is_debug = gpa: {
+        if (builtin.os.tag == .wasi) break :gpa .{ std.heap.wasm_allocator, false };
+        break :gpa switch (builtin.mode) {
+            .Debug, .ReleaseSafe => .{ debug_allocator.allocator(), true },
+            .ReleaseFast, .ReleaseSmall => .{ std.heap.smp_allocator, false },
+        };
+    };
+    defer if (is_debug) {
+        // _ = debug_allocator.detectLeaks();
+        _ = debug_allocator.deinit();
+    };
 
     var timer = try std.time.Timer.start();
     const part1 = try puzzle1(allocator, input);
