@@ -5,7 +5,7 @@ pub fn main() !void {
     var gpa = std.heap.DebugAllocator(.{}){};
     defer std.debug.assert(gpa.deinit() == .ok);
     const allocator = gpa.allocator();
-    _ = try part1(allocator, "input.txt");
+    std.debug.print("part1 = {d}\n", .{try part1(allocator, "input.txt")});
 }
 
 fn readFile(allocator: std.mem.Allocator, filename: []const u8) ![]const u8 {
@@ -27,7 +27,7 @@ fn readFile(allocator: std.mem.Allocator, filename: []const u8) ![]const u8 {
 test "example1" {
     const allocator = std.testing.allocator;
     try std.testing.expectEqual(7036, part1(allocator, "example1.txt"));
-    // try std.testing.expectEqual(11048, part1(allocator, "example2.txt"));
+    try std.testing.expectEqual(11048, part1(allocator, "example2.txt"));
 }
 
 const Cell = enum(u8) {
@@ -35,7 +35,7 @@ const Cell = enum(u8) {
     Wall = 1,
     Start = 2,
     End = 3,
-    East,
+    East = 101,
     West,
     South,
     North,
@@ -44,6 +44,20 @@ const Cell = enum(u8) {
 const Position = struct {
     row: usize = 0,
     column: usize = 0,
+
+    pub fn format(self: Position, comptime fmt: []const u8, _: std.fmt.FormatOptions, writer: anytype) !void {
+        if (fmt.len != 0) {
+            std.fmt.invalidFmtError(fmt, self);
+        }
+        try writer.print("{d},{d}", .{ self.row, self.column });
+    }
+};
+
+const Direction = enum(u8) {
+    East = 101,
+    West,
+    South,
+    North,
 };
 
 const Map = struct {
@@ -149,37 +163,54 @@ fn part1(allocator: std.mem.Allocator, filename: []const u8) !usize {
 
     var path = std.ArrayList(Position).init(allocator);
     defer path.deinit();
+    var directions = std.ArrayList(Cell).init(allocator);
+    defer directions.deinit();
 
     // var direction: Cell = .East;
+    var minimum_score: usize = std.math.maxInt(usize);
     var steps: usize = 0;
     map.steps[map.start_pos.row][map.start_pos.column] = 0;
     try path.append(map.start_pos);
+    try directions.append(.East);
     while (path.pop()) |current| {
+        const current_dir = directions.pop() orelse unreachable;
         map.cells[current.row][current.column] = Cell.East; // Mark as visited
         steps = map.steps[current.row][current.column];
-        std.debug.print("Current position: {d}, {d} : {d}\n", .{ current.row, current.column, steps });
+        // std.debug.print("Current position: {} : {d}\n", .{ current, steps });
         if (current.row == map.end_pos.row and current.column == map.end_pos.column) {
             std.debug.print("Steps = {d}\n", .{steps});
+            if (minimum_score > steps) {
+                minimum_score = steps;
+            }
         }
         // Check neighbors
-        const neighbors = [_]Position{
-            .{ .row = current.row + 1, .column = current.column }, // South
-            .{ .row = current.row - 1, .column = current.column }, // North
-            .{ .row = current.row, .column = current.column + 1 }, // East
-            .{ .row = current.row, .column = current.column - 1 }, // West
-        };
-        for (neighbors) |neighbor| {
+        const dirs: []const Cell = &.{ .East, .West, .South, .North };
+        for (dirs) |dir| {
+            const neighbor: Position = switch (dir) {
+                .East => .{ .row = current.row, .column = current.column + 1 },
+                .West => .{ .row = current.row, .column = current.column - 1 },
+                .South => .{ .row = current.row + 1, .column = current.column },
+                .North => .{ .row = current.row - 1, .column = current.column },
+                else => unreachable,
+            };
+            // std.debug.print("Checking direction: {d} {}\n", .{ dir, neighbor });
             if (neighbor.row < map.rows and neighbor.column < map.columns and
                 map.cells[neighbor.row][neighbor.column] != .Wall and
-                (map.cells[neighbor.row][neighbor.column] == .Empty or steps < map.steps[neighbor.row][neighbor.column]))
+                (map.cells[neighbor.row][neighbor.column] == .Empty or map.cells[neighbor.row][neighbor.column] == .End or
+                    steps < map.steps[neighbor.row][neighbor.column]))
             {
                 try path.append(neighbor);
-                map.cells[neighbor.row][neighbor.column] = Cell.West; // Mark as visited
-                map.steps[neighbor.row][neighbor.column] = steps + 1;
+                try directions.append(dir);
+                map.cells[neighbor.row][neighbor.column] = dir; // Mark as visited
+                if (dir == current_dir) {
+                    map.steps[neighbor.row][neighbor.column] = steps + 1;
+                } else {
+                    map.steps[neighbor.row][neighbor.column] = steps + 1001;
+                }
             }
         }
     }
-    std.debug.print("Steps taken: {d}\n", .{steps});
+    // std.debug.print("score: {d}\n", .{minimum_score});
 
-    return 7036;
+    return minimum_score;
 }
